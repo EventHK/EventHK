@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<script src="js/jquery-2.1.1.min.js"></script>
+	<script src="js/underscore-min.js"></script>
+	<script src="js/backbone-min.js"></script>
+    <script src="js/firebase.js"></script>
+    <script src="js/backbone-firebase.js"></script>
+    <script src="js/handlebars-v1.3.0.js"></script>
+    <script src="js/json2.js"></script>
+
+	<script src="js/backbonemodel.js"></script>
+	<script src="js/models/calmodels.js"></script>
+	<script src="js/backbone-listeners.js"></script>
+	<script src="js/moment.js"></script>
+
+	<script src="js/jquery-ui-1.11.2/jquery-ui.js"></script>
+    <link href="js/jquery-ui-1.11.2/jquery-ui.css" rel="stylesheet">
+
+	<script src="pagejs/cal.js"></script>
+
+    <link href="css/font-awesome-4.2.0/css/font-awesome.css" rel="stylesheet">
+    <link href="css/ionicons.min.css" rel="stylesheet">
+
+    <!-- Include the compiled Ratchet CSS -->
+    <link href="js/ratchet-v2.0.2/css/ratchet.css" rel="stylesheet">
+    <link href="js/ratchet-v2.0.2/css/ratchet-theme-ios.css" rel="stylesheet">
+
+    <!-- Include the compiled Ratchet JS -->
+    <script src="js/ratchet-v2.0.2/js/ratchet.js"></script>
+
+	<meta name="viewport" content="width=device-width,user-scalable=no">
+	<link href='http://fonts.googleapis.com/css?family=Roboto:400,100,700,300italic,100italic,300,400italic,500,500italic,700italic,900,900italic' rel='stylesheet' type='text/css'>
+
+	<style>
+		* {
+			font-family: 'roboto';
+		}
+
+		.box {
+			width:  53px;
+			height: 30px;
+			float:left;
+			text-align: center;
+			overflow: hidden;
+			padding: 3px;
+			border-radius: 0px;
+		}
+
+		#dates .box {		
+			width:  53px;
+			height: 60px;
+			margin-bottom: 10px;
+			border: 0px;
+		}
+
+		#dates .box .d {
+			position:absolute;
+			font-size: 2.5em;
+			left: 5px;
+			bottom: 5px;
+			opacity: 0.2;
+			color: #777;
+		}
+
+		#dates .box .activities {
+			position: absolute;
+			bottom: 0px;
+			left: 0px;
+			padding: 1px 0px;
+			font-size: 1.4em;
+		}
+
+		#dates .box .l {
+			float:right;
+			opacity: 0.5;
+			color: black;
+		}
+
+		.header {
+			color: silver;
+		}
+
+		body {
+			color: HotPink ;
+			background-color: white;
+			max-width: 375px !important;
+		}
+
+		.type {
+			background-color: transparent;
+			color: white;
+			padding: 0.2em 0.2em;
+			font-size: 12px;
+		}
+
+		.type.music {
+			color: deepskyblue;
+		}
+
+		.type.food {
+			color: goldenrod;
+		}
+
+		.type.ams {
+			color: green;
+		}
+
+		.type.choir {
+			color: navy;
+		}
+
+		.box.work {
+			background-color: #fef;
+		}
+
+		.box.o {
+			background-color: #fff;
+		}
+
+		.box.today {
+			border: 3px solid pink !important;
+		}
+	</style>
+</head>
+<body>
+	<!--
+		1/2/3
+		egg/veggie/fruit
+		ams
+		piano
+		choir
+	-->
+    <!-- Wrap all non-bar HTML in the .content div (this is actually what scrolls) -->
+	<div class="content-padded" id="cal">
+		<div>
+			<h1> 
+				<span class="pull-right"> 
+					<i class="fa fa-angle-left fa-lg" id="prevMonth" style="padding-right:10px"></i>
+					<i class="fa fa-angle-right fa-lg" id="nextMonth" style="padding-right:10px"></i>
+				</span>
+				<span id="monthName"></span> 
+				<small><span id="yearName"></span></small> 
+			</h1>
+		</div>
+    	<div style="margin:-10px; margin-top:20px">
+    		<div id="calDetails">
+    			<div class="header">
+	    			<div class="box" style="display:none">Su</div>
+	    			<div class="box" style="display:none">M</div>
+	    			<div class="box" style="display:none">T</div>
+	    			<div class="box" style="display:none">W</div>
+	    			<div class="box" style="display:none">Th</div>
+	    			<div class="box" style="display:none">F</div>
+	    			<div class="box" style="display:none">Sa</div>
+	    		</div>
+
+	    		<div id="dates"></div>
+    		</div>
+    	</div>
+    </div>
+
+	<div id="form" class="modal">
+	  <header class="bar bar-nav">
+	    <a class="icon icon-close pull-right" href="#form"></a>
+	    <h1 class="title">
+	    	<i class="fa fa-angle-left fa-lg" id="prevDate" style="padding-right:10px"></i>
+			<span id="date"></span>
+			<i class="fa fa-angle-right fa-lg" id="nextDate" style="padding-left:10px"></i>
+	    </h1>
+	  </header>
+
+	  <style>
+	  	#form .t {
+	  		margin-bottom: 5px;
+	  	}
+	  </style>
+	  <div class="content">
+		<ul class="table-view" style="margin:0px">
+		  <style>
+		  	#duty-choices .control-item {
+		  		min-width: 44px;
+		  	}
+		  </style>
+		  <li class="table-view-cell" id="duty-choices">
+		    <div class="t">Duty</div>
+			<div class="segmented-control" >
+			  <a class="control-item" data-id='d' data-value='C1'>C1</a>
+			  <a class="control-item" data-id='d' data-value='C2'>C2</a>
+			  <a class="control-item" data-id='d' data-value='C3'>C3</a>
+			  <a class="control-item" data-id='d' data-value='W1'>W1</a>
+			  <a class="control-item" data-id='d' data-value='W2'>W2</a>
+			  <a class="control-item" data-id='d' data-value='W3'>W3</a>
+			  <a class="control-item" data-id='d' data-value='C*'>C*</a>
+			  <a class="control-item" data-id='d' data-value='OFF'>Off</a>
+			</div>
+		  </li>
+		  <li class="table-view-cell">
+		    Piano
+		    <div class="toggle" data-id='piano'>
+		      <div class="toggle-handle"></div>
+		    </div>
+		  </li>
+		  <li class="table-view-cell">
+		    AMS
+		    <div class="toggle" data-id='ams'>
+		      <div class="toggle-handle"></div>
+		    </div>
+		  </li>
+		  <li class="table-view-cell">
+		    Learners Choir
+		    <div class="toggle" data-id='choir'>
+		      <div class="toggle-handle"></div>
+		    </div>
+		  </li>
+
+		  <li class="table-view-cell">
+		    <div class="t">Food Sampling</div>
+			<div class="segmented-control" >
+			  <a class="control-item" data-id='food' data-value='E'>Egg</a>
+			  <a class="control-item" data-id='food' data-value='V'>Veggie</a>
+			  <a class="control-item" data-id='food' data-value='F'>Fruit</a>
+			  <a class="control-item" data-id='food' data-value='OFF'>Off</a>
+			</div>
+		  </li>		  
+		</ul>	  	
+	  </div>
+	</div>
+</body>
+</html>
